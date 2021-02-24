@@ -1,11 +1,11 @@
 const config = require("./config.json");
 const fs = require('fs');
-//const { google } = require('googleapis');
+const { google } = require('googleapis');
 
 
 var fileId = config.fileID;
 var dest = fs.createWriteStream('~/hsdiscordbot/formresponses.csv');
-drive.files.export({
+google.drive.files.export({
   fileId: fileId,
   mimeType: 'text/csv'
 })
