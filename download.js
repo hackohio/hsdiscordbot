@@ -5,7 +5,7 @@ const { google } = require('googleapis');
 
 var fileId = config.fileID;
 var dest = fs.createWriteStream('~/hsdiscordbot/formresponses.csv');
-google.drive.files.export({
+google.drive.export({
   fileId: fileId,
   mimeType: 'text/csv'
 })
