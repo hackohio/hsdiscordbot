@@ -16,7 +16,7 @@ const {google} = require('googleapis');
  * 
  */
   const csvFileName = "High School I_O 2021 Registration Form (Responses) - Form Responses"
-  const csvPath = "C:/Users/ander/Documents/Real HS Bot/Highschool IO Bot/" + csvFileName + ".csv";
+  const csvPath = csvFileName + ".csv";
 
 bot.on("ready", () => {
     console.log("Ready");
