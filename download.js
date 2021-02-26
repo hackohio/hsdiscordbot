@@ -117,7 +117,7 @@ google.drive.file.export({
 function downloadFile(auth) {
   const drive = google.drive({ version: "v3", auth });
   var fileId = config.fileID;
-  var dest = fs.createWriteStream("test.csv");
+  var dest = fs.createWriteStream("High School I_O 2021 Registration Form (Responses) - Form Responses.csv");
   drive.files.export(
     { fileId: fileId, mimeType: "text/csv" },
     { responseType: "stream" },
