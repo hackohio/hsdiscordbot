@@ -15,7 +15,7 @@ const {google} = require('googleapis');
  * @author Daniel Dawit and Thomas Dawit
  * 
  */
-  const csvFileName = "High School I_O 2021 Registration Form (Responses) - Form Responses"
+  const csvFileName = ""
   const csvPath = csvFileName + ".csv";
 
 bot.on("ready", () => {
@@ -54,15 +54,15 @@ bot.on("guildMemberAdd", (member) => {
 const prefix = config.prefix;
 const cooldown = {};
 
-const teamAssignedID = "810512791622123561";
-const participantID = "810512791622123562";
-const verifiedChannelID = "810512791625924665";
-const archiveCategoryID = "810512792364777530";
+const teamAssignedID = "892527519939584061";
+const participantID = "892527519939584062";
+const verifiedChannelID = "892527520212201508";
+const archiveCategoryID = "892527520736505915";
 
-const mentorID = "810512791622123565";
-const eClubID = "810512791622123568";
-const sponsorID = "810512791622123566";
-const judgeID = "810512791622123564";
+const mentorID = "892527519939584065";
+const eClubID = "892527519939584067";
+const sponsorID = "892527519939584066";
+const judgeID = "892527519939584064";
 
 const discordUsernameColName = "Discord Username? If you don't have one sign up here: https://discord.com/register";
 const emailColName = "Email Address";
@@ -354,49 +354,6 @@ bot.on("message", async message => {
         message.channel.send("You cannot add members to this team.");
     }
     }
-
-    /*
-    if(mentions != null && (mentions.length > 0 && mentions.length <= maxInTeam-numPeopleInRole)){
-                             
-                  if(teamName != null){
-                    //let role = message.guild.roles.cache.find(i => i.name == teamName);
-                    if(message.member.roles.cache.has(role)){
-                        if(role != null){
-                            //Add people to the team here
-                            for (let person of mentions) {
-                                if (person._roles.some(i => i == teamAssigned)) {
-                                    message.reply(person.user.username + " cannot be added to another team");
-                                    return;
-                                } else {
-                                    message.reply(person.user.username + " was added to your team");
-                                    person.roles.add(message.guild.roles.cache.get(teamAssigned));
-                                }
-                            }
-                        
-                            mentions.forEach(i => {
-                                i.roles.add(role.id);//adds member to the role
-                            });
-
-
-                           member.roles.add(role);
-                        } else {
-                            message.channel.send("Team does not exist");
-                        }
-                    } else {
-                     message.reply("you are not apart of this team");
-                    }
-             } else {
-                 message.channel.send("Team does not exist");
-              }
-          } else {
-              message.channel.send("You must include at least one new invite and cannot exceed four members in a team");
-          }
-     } else {
-           message.channel.send("You do not have access to this command").then(r => r.delete({timeout: 2500}));
-        }
-
-    */
-
 
     if (command == prefix + "leaveteam") {
 
