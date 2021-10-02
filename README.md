@@ -1,2 +1,2 @@
 # hsdiscordbot
-Discord bot for HS2021
+Discord bot for OHI/O
