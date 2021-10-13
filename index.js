@@ -54,33 +54,53 @@ bot.on("guildMemberAdd", (member) => {
 const prefix = config.prefix;
 const cooldown = {};
 
+//Participant focused IDs
 const teamAssignedID = "892527519939584061";
 const participantID = "892527519939584062";
 const verifiedChannelID = "892527520212201508";
 const archiveCategoryID = "892527520736505915";
 
+//Misc IDs
+const organizerID = "892527519939584069";
 const mentorID = "892527519939584065";
 const eClubID = "892527519939584067";
 const sponsorID = "892527519939584066";
 const judgeID = "892527519939584064";
 
-const discordUsernameColName = "Discord Username? If you don't have one sign up here: https://discord.com/register";
-const emailColName = "Email Address";
+//Name of the column that contains the discord user name and the users email
+const discordUsernameColName = "confirmation.discord";
+const emailColName = "email";
+const signatureLiabilityColName = "confirmation.signatureLiability"
+
+//Message that sends if not in records
+const doesNotExist = "Your discord username is not attached to our records. Please try"+
+" again with the discord account you registered with or contact an organizer. " +
+ "If you are verifying your account under 24 hours from your confirmation, please wait" +
+ " until 24 hours have passed and try again."
 
 /*
 * Bot commands.
 */
 bot.on("message", async message => {
 
+    //ignores dms
     if (message.channel.type == "dm" || message.author.bot) return;
 
+    //gets the name of the command used
     let command = message.content.split(" ")[0];
     let args = message.content.substring(command.length + 1).split(" ");
 
+    /*
+    * Verification command
+    */
     if (command == prefix + "verify") {
+        //If we are in the verify channel
         if (message.channel.id == verifiedChannelID) {
             let discordUsernameExists = false;
             message.delete({timeout: 0});
+            /*
+            * Create read stream to confirm the users status
+            */
             fs.createReadStream(csvPath)//create a stream that reads the file
                 .pipe(csv())//pipe it as a csv format
                 .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
@@ -111,18 +131,23 @@ bot.on("message", async message => {
                 })
                 .on('end', () => {//when the file is done being read this runs
                     if (!discordUsernameExists)
-                        message.author.send("Your discord username is not attached to our records. Please try again with the discord account you registered with or contact an organizer. " + "If you are verifying your account under 24 hours from your confirmation, please wait until 24 hours have passed and try again.");
-                    //say they're not a registered user
-                    //message.member.send("Hey you need to confirm")
+                        //Sends message to user if record does not exist
+                        message.author.send(doesNotExist);
                 });
         } else {
+            //Delete if command is used elsewhere
             message.delete({timeout: 0});
         }
     }
 
 
+    /*
+    * Create team command
+    */
     if (command == prefix + "createteam") {
+        //Check if member is a participant
         if (message.member._roles.some(i => i == participantID)) {
+            //Check if command was used recently
             if (cooldown[message.author.id] != null && cooldown[message.author.id] > new Date().getTime()) {
                 message.reply("You cannot create a team at this moment. You have recently used this command within the last 5 minutes");
                 return;
@@ -133,10 +158,12 @@ bot.on("message", async message => {
             let teamName = message.content.substring(indx, indx2);//finds the team name
             teamName = teamName.substring(0, 52);//makes sure it is less than 52 characters and above 3
 
+            //Checks for illegal characters
             if (teamName.length == 1 && ",.<>?/;:'\"[{]}=+~`!@#$%^&*()".split("").some(i => teamName.includes(i))) {
                 return message.channel.send("Illegal characters in your team name");
             }
 
+            //Checks if teamname already exists
             let bool1 = true;
             message.guild.roles.cache.forEach(i => {
                 if (i.name.toLowerCase() == teamName.toLowerCase()) {
@@ -151,18 +178,21 @@ bot.on("message", async message => {
             const teamAssigned = teamAssignedID;
             const participants = participantID;
 
+            //Checks for valid parameters (members that are @'ed)
             if (mentions.length > 0 && mentions.length < 4) {
                 mentions.push(message.member);
 
                 
-
+                //Checks if member is already in a team
                 if (message.member.roles.cache.has(teamAssigned)) {
                     message.reply("You cannot create a team as you are already in one. Please leave a team first.");
                     return;
                 } else {
                    // message.member.roles.add(message.guild.roles.cache.get(teamAssigned));
                 }
-
+                
+                //For each person in the mentioned paramters
+                //TODO: Create functionality to allow members to choose to join
                 for (let person of mentions) {
                     if(person.roles.cache.has(participants)){
                         if (person._roles.some(i => i == teamAssigned)) {
@@ -196,6 +226,7 @@ bot.on("message", async message => {
                     reason: "New Team Created"
                 });
 
+                //Messages channel the team is created
                 message.channel.send("Team " + teamName + " created. View your channels below.")
 
                 mentions.forEach(i => {
@@ -203,7 +234,7 @@ bot.on("message", async message => {
                 });
 
                 
-
+                //Creates team category
                 let category = await message.guild.channels.create("Team " + teamName, {
                     type: "category",
                     permissionOverwrites: [
@@ -237,7 +268,7 @@ bot.on("message", async message => {
                 });
                 await category.setPosition(message.guild.channels.cache.size - 1);
 
-                //this is the part where i change it
+                //Creates team text channel
                 let newTextChannel = await message.guild.channels.create(teamName + "-text", {
                     type: "text",
                     permissionOverwrites: [
@@ -270,6 +301,7 @@ bot.on("message", async message => {
 
                 await newTextChannel.setParent(category.id, {lockPermissions: false});
 
+                //Creates team voice channel
                 let newVoiceChannel = await message.guild.channels.create(teamName + "-voice", {
                     type: "voice",
                     permissionOverwrites: [
@@ -311,8 +343,7 @@ bot.on("message", async message => {
 
     //add member to a team. o.addmember "teamname" @[invite] 
     /*
-    - Invites between 1-3 depending on size
-    -
+    * Add member command - Invites between 1-3 depending on size
     */
     if (command == prefix + "addmember") {
         
@@ -355,6 +386,9 @@ bot.on("message", async message => {
     }
     }
 
+    /*
+    * Leave team command
+    */
     if (command == prefix + "leaveteam") {
 
         
@@ -394,8 +428,41 @@ bot.on("message", async message => {
 
     }
 
+    /*
+    * Print names command - Organizers only
+    */
+    if (command == prefix + "printnames") {
+        message.delete({timeout: 0});
+        if (message.member._roles.some(i => i == organizerID)) {
+            message.author.send("\n------Verified Participants in Discord------\n")
+            const count = 0;
+            
+            fs.createReadStream(csvPath)//create a stream that reads the file
+                .pipe(csv())//pipe it as a csv format
+                .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
+                    //if (row["confirmation.discordUsername"] == message.author.tag) {
+                        let userName = row[discordUsernameColName];
+                        let person = message.guild.members.cache.find(i => i.user.tag === userName);
 
-    //Parses Strings to code and outputs it || Only ProNanigans can use this
+                        if(person != null && person._roles.some(i => i == participantID)){
+                            message.author.send(row[signatureLiabilityColName] + ", " + userName); 
+                        }
+
+                        })
+                .on('end', () => {//when the file is done being read this runs
+                        message.author.send("------ Finished ------\n");
+                        //message.author.send("Total Verified Users: " + count);
+                    //say they're not a registered user
+                    //message.member.send("Hey you need to confirm")
+                });
+
+
+        } else {
+            message.channel.send("You do not have access to this command").then(r => r.delete({timeout: 10000}));
+        }
+    }
+
+    //Parses Strings to code and outputs it
     if (command == prefix + "e") {
 
         if (!args[0]) return message.channel.send("Please input something to execute");
