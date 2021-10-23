@@ -165,7 +165,7 @@ bot.on("message", async message => {
 
 
     /*
-    * Create virtual team command
+    * Create team command
     */
     if (command == prefix + "createteam") {
         //Check if member is a participant
@@ -422,8 +422,8 @@ bot.on("message", async message => {
         let mentions = message.mentions.members;
 
         //team name
-        let indx = message.content.indexOf("\"") + 1;
-        let indx2 = message.content.indexOf("\"", indx);
+        let indx = message.content.indexOf("[") + 1;
+        let indx2 = message.content.indexOf("]", indx);
         let teamName = message.content.substring(indx, indx2);//finds the team name
         teamName = teamName.substring(0, 52);
 
@@ -460,7 +460,7 @@ bot.on("message", async message => {
 
         
         let role = message.member.roles.cache.find(i => {
-            args = args.map(j => j.replace("\"", ""));
+            args = args.map(j => j.replace("/[[]]/g", ""));
             return i.name == args.join(" ");
         });
 
