@@ -19,7 +19,7 @@ const {google} = require('googleapis');
   const csvPath = csvFileName + ".csv";
   const teamcounterFileName = "./teamcounter.json";
   const teamcounter = require(teamcounterFileName);
-  const currentTeamCount = teamcounter.virtualCoutner;
+  const currentTeamCount = teamcounter.virtualCounter;
 
 
 
@@ -346,6 +346,7 @@ bot.on("message", async message => {
                     console.log(JSON.stringify(teamcounter));
                     console.log('writing to ' + teamcounterFileName);
                   });
+                  console.log(JSON.stringify(teamcounter));
 
             } else {
                 message.channel.send("Your team must be between 2 to 4 people");
