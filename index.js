@@ -17,6 +17,10 @@ const {google} = require('googleapis');
  */
   const csvFileName = ""
   const csvPath = csvFileName + ".csv";
+  const teamcounterFileName = "./teamcounter.json"
+  const teamcounter = require(teamcounterFileName);
+
+
 
 bot.on("ready", () => {
     console.log("Ready");
@@ -142,7 +146,7 @@ bot.on("message", async message => {
 
 
     /*
-    * Create team command
+    * Create virtual team command
     */
     if (command == prefix + "createteam") {
         //Check if member is a participant
@@ -171,6 +175,7 @@ bot.on("message", async message => {
                     return message.channel.send("This team name already exists");
                 }
             });
+            //Second catch
             if (!bool1) return;
 
 
@@ -333,6 +338,14 @@ bot.on("message", async message => {
                 });
                 await newVoiceChannel.setParent(category.id, {lockPermissions: false});
 
+                teamcounter.virtualCounter = teamcounter.virtualCounter++;
+                //Update team counter
+                fs.writeFile(teamcounterFileName, JSON.stringify(teamcounterFileName, null, 2), function writeJSON(err) {
+                    if (err) return console.log(err);
+                    console.log(JSON.stringify(teamcounter));
+                    console.log('writing to ' + teamcounterFileName);
+                  });
+
             } else {
                 message.channel.send("Your team must be between 2 to 4 people");
             }
@@ -341,6 +354,7 @@ bot.on("message", async message => {
         }
     }
 
+  
     // in person team creation (already have a number)
     // 
 
