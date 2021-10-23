@@ -1,7 +1,8 @@
 # registration-get
-# $ python -m pip install requests
-# $ python -m pip install beautifulsoup4
+# $ python3 -m pip install requests
+# $ python3 -m pip install beautifulsoup4
 import json
+import csv
 import requests
 from requests.auth import HTTPBasicAuth
 from bs4 import BeautifulSoup
@@ -15,8 +16,13 @@ URL = data['url']
 
 #get request
 page = requests.get(URL) 
-with open('hsdiscordbot/users.csv', 'wb') as f:
-    f.write(page.content)
+with open('Users.csv', 'w') as f:
+    writer = csv.writer(f)
+    for line in page.iter_lines():
+        writer.writerow(line.decode('utf-8').split(','))
+
+#with open('hsdiscordbot/users.csv', 'wb') as f:
+#    f.write(page.content)
 
 #close json file
 f.close()
