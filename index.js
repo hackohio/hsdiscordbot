@@ -176,10 +176,27 @@ bot.on("message", async message => {
                 return;
             }
             cooldown[message.author.id] = new Date() + 300000;
-            let indx = message.content.indexOf("\"") + 1;
-            let indx2 = message.content.indexOf("\"", indx);
+
+            //Extract team name
+            let indx = message.content.indexOf("[") + 1;
+            let indx2 = message.content.indexOf("]", indx);
             let teamName = message.content.substring(indx, indx2);//finds the team name
             teamName = teamName.substring(0, 52);//makes sure it is less than 52 characters and above 3
+
+            //Extract table number (in person only)
+            let indxTN = message.content.indexOf("[", index2+1);
+            let indxTN2 = message.content.indexOf("]", indxTN);
+            let inPerson = !(indxTN < 0); //Determines if in person team
+            var teamNumber;
+            
+            //Assigns teamNumber based on in person status
+            if(inPerson){
+                let teamNumberString = message.content.substring(indxTN, indxTN2)
+                teamNumber = parseInt(teamNumberString);
+            } else {
+                teamNumber = teamcounter.virtualCounter;
+            }
+
 
             //Checks for illegal characters
             if (teamName.length == 1 && ",.<>?/;:'\"[{]}=+~`!@#$%^&*()".split("").some(i => teamName.includes(i))) {
@@ -255,11 +272,11 @@ bot.on("message", async message => {
 
                 mentions.forEach(i => {
                     i.roles.add(role.id);//adds member to the role
-                });
+                });                
 
 
                 //Creates team category
-                let category = await message.guild.channels.create("Team " + teamcounter.virtualCounter + " - " + teamName, {
+                let category = await message.guild.channels.create("Team " + teamNumber + " - " + teamName, {
                     type: "category",
                     permissionOverwrites: [
                         {
@@ -357,31 +374,22 @@ bot.on("message", async message => {
                 });
                 await newVoiceChannel.setParent(category.id, {lockPermissions: false});
 
-                //Read and write to json
-                jsonReader(teamcounterFileName, (err, teamcounter) => {
-                    if (err) {
-                      console.log(err);
-                      return;
-                    }
-                    console.log(teamcounter.virtualCounter); // => "Infinity Loop Drive"
-                    teamcounter.virtualCounter += 1;
+                if(!inPerson){
+                    //Read and write to json file (teamcounter.json - default = 500)
+                    jsonReader(teamcounterFileName, (err, teamcounter) => {
+                        if (err) {
+                        console.log(err);
+                        return;
+                        }
+                        console.log(teamcounter.virtualCounter);
+                        teamcounter.virtualCounter += 1; //Increment counter by one
 
-                    fs.writeFile(teamcounterFileName, JSON.stringify(teamcounter, null, 2), (err) => {
-                        if(err) console.log('Error writing file:', err)
+                        fs.writeFile(teamcounterFileName, JSON.stringify(teamcounter, null, 2), (err) => {
+                            if(err) console.log('Error writing file:', err)
+                        });
+        
                     });
-    
-                  });
-
-                //writeToJsonKey(teamcounterFileName, teamcounter.virtualCounter, teamcounter.virtualCounter++);
-
-                // teamcounter.virtualCounter = teamcounter.virtualCounter++;
-                // //Update team counter and write to file
-                // fs.writeFile(teamcounterFileName, JSON.stringify(teamcounterFileName, null, 2), function writeJSON(err) {
-                //     if (err) return console.log(err);
-                //     console.log(JSON.stringify(teamcounter));
-                //     console.log('writing to ' + teamcounterFileName);
-                //   });
-                //   console.log(JSON.stringify(teamcounter));
+                }
 
             } else {
                 message.channel.send("Your team must be between 2 to 4 people");
