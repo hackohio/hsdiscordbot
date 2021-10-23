@@ -463,7 +463,6 @@ bot.on("message", async message => {
             args = args.map(j => j.replace(/\[/g,"").replace(/\]/g,""));
             return i.name == args.join(" ");
         });
-        console.log(role);
 
         if (role != null) {
             await message.member.roles.remove(role);//removes person from role
