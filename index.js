@@ -15,10 +15,11 @@ const {google} = require('googleapis');
  * @author Daniel Dawit and Thomas Dawit
  * 
  */
-  const csvFileName = ""
+  const csvFileName = "";
   const csvPath = csvFileName + ".csv";
-  const teamcounterFileName = "./teamcounter.json"
+  const teamcounterFileName = "./teamcounter.json";
   const teamcounter = require(teamcounterFileName);
+  const currentTeamCount = teamcounter.virtualCoutner;
 
 
 
@@ -240,7 +241,7 @@ bot.on("message", async message => {
 
                 
                 //Creates team category
-                let category = await message.guild.channels.create("Team " + teamName, {
+                let category = await message.guild.channels.create("Team " + currentTeamCount + " - " + teamName, {
                     type: "category",
                     permissionOverwrites: [
                         {
@@ -339,7 +340,7 @@ bot.on("message", async message => {
                 await newVoiceChannel.setParent(category.id, {lockPermissions: false});
 
                 teamcounter.virtualCounter = teamcounter.virtualCounter++;
-                //Update team counter
+                //Update team counter and write to file
                 fs.writeFile(teamcounterFileName, JSON.stringify(teamcounterFileName, null, 2), function writeJSON(err) {
                     if (err) return console.log(err);
                     console.log(JSON.stringify(teamcounter));
