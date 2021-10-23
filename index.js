@@ -341,8 +341,11 @@ bot.on("message", async message => {
         }
     }
 
-    // in person team creation
-    // virtual team creation
+    // in person team creation (already have a number)
+    // 
+
+    // virtual team creation (assign a number)
+    // 600, 601
     
 
     //add member to a team. o.addmember "teamname" @[invite] 

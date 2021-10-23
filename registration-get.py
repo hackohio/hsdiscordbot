@@ -14,7 +14,9 @@ data = json.load(f)
 URL = data['url']
 
 #get request
-page = requests.get(URL)
+page = requests.get(URL) 
+with open('hsdiscordbot/users.csv', 'wb') as f:
+    f.write(page.content)
 
 #close json file
 f.close()
