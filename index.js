@@ -15,8 +15,13 @@ const {google} = require('googleapis');
  * @author Daniel Dawit and Thomas Dawit
  * 
  */
-  const csvFileName = ""
+  const csvFileName = "";
   const csvPath = csvFileName + ".csv";
+  const teamcounterFileName = "./teamcounter.json";
+  const teamcounter = require(teamcounterFileName);
+  const currentTeamCount = teamcounter.virtualCoutner;
+
+
 
 bot.on("ready", () => {
     console.log("Ready");
@@ -142,7 +147,7 @@ bot.on("message", async message => {
 
 
     /*
-    * Create team command
+    * Create virtual team command
     */
     if (command == prefix + "createteam") {
         //Check if member is a participant
@@ -171,6 +176,7 @@ bot.on("message", async message => {
                     return message.channel.send("This team name already exists");
                 }
             });
+            //Second catch
             if (!bool1) return;
 
 
@@ -235,7 +241,7 @@ bot.on("message", async message => {
 
                 
                 //Creates team category
-                let category = await message.guild.channels.create("Team " + teamName, {
+                let category = await message.guild.channels.create("Team " + currentTeamCount + " - " + teamName, {
                     type: "category",
                     permissionOverwrites: [
                         {
@@ -333,6 +339,14 @@ bot.on("message", async message => {
                 });
                 await newVoiceChannel.setParent(category.id, {lockPermissions: false});
 
+                teamcounter.virtualCounter = teamcounter.virtualCounter++;
+                //Update team counter and write to file
+                fs.writeFile(teamcounterFileName, JSON.stringify(teamcounterFileName, null, 2), function writeJSON(err) {
+                    if (err) return console.log(err);
+                    console.log(JSON.stringify(teamcounter));
+                    console.log('writing to ' + teamcounterFileName);
+                  });
+
             } else {
                 message.channel.send("Your team must be between 2 to 4 people");
             }
@@ -341,6 +355,7 @@ bot.on("message", async message => {
         }
     }
 
+  
     // in person team creation (already have a number)
     // 
 
