@@ -86,20 +86,20 @@ const doesNotExist = "Your discord username is not attached to our records. Plea
  " until 24 hours have passed and try again."
 
 
- function writeToJsonKey(fileName, keyName, value){
-    let fullpath = PATH.resolve(GETPATH, fileName);
-    let rawdata = fs.readFileSync(fullpath,'utf8');
-    console.log(rawdata) //returns data as per json and is of string type
-    
-    const data = JSON.parse(rawdata); 
-    lodash.set(data, keyName, value );
-  
-    
-    fs.writeFileSync(fullpath, JSON.stringify(data, null, 2), function (err) { 
-        if (err) throw err;
-        console.log('Saved!');
-      });
-}
+ function jsonReader(filePath, cb) {
+    fs.readFile(filePath, (err, fileData) => {
+      if (err) {
+        return cb && cb(err);
+      }
+      try {
+        const object = JSON.parse(fileData);
+        return cb && cb(null, object);
+      } catch (err) {
+        return cb && cb(err);
+      }
+    });
+  }
+
 
 /*
 * Bot commands.
@@ -257,9 +257,9 @@ bot.on("message", async message => {
                     i.roles.add(role.id);//adds member to the role
                 });
 
-                
+
                 //Creates team category
-                let category = await message.guild.channels.create("Team " + currentTeamCount + " - " + teamName, {
+                let category = await message.guild.channels.create("Team " + teamcounter.virtualCounter + " - " + teamName, {
                     type: "category",
                     permissionOverwrites: [
                         {
@@ -357,8 +357,22 @@ bot.on("message", async message => {
                 });
                 await newVoiceChannel.setParent(category.id, {lockPermissions: false});
 
-                writeToJsonKey(teamcounterFileName, teamcounter.virtualCounter, teamcounter.virtualCounter++);
+                //Read and write to json
+                jsonReader(teamcounterFileName, (err, teamcounter) => {
+                    if (err) {
+                      console.log(err);
+                      return;
+                    }
+                    console.log(teamcounter.virtualCounter); // => "Infinity Loop Drive"
+                    teamcounter.virtualCounter += 1;
 
+                    fs.writeFile(teamcounterFileName, JSON.stringify(teamcounter, null, 2), (err) => {
+                        if(err) console.log('Error writing file:', err)
+                    });
+    
+                  });
+
+                //writeToJsonKey(teamcounterFileName, teamcounter.virtualCounter, teamcounter.virtualCounter++);
 
                 // teamcounter.virtualCounter = teamcounter.virtualCounter++;
                 // //Update team counter and write to file
