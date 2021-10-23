@@ -7,6 +7,8 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
+const lodash = require('lodash');
+
 
 /**
  * I/O Discord Bot. Create team formations from a formation form.
@@ -339,14 +341,17 @@ bot.on("message", async message => {
                 });
                 await newVoiceChannel.setParent(category.id, {lockPermissions: false});
 
-                teamcounter.virtualCounter = teamcounter.virtualCounter++;
-                //Update team counter and write to file
-                fs.writeFile(teamcounterFileName, JSON.stringify(teamcounterFileName, null, 2), function writeJSON(err) {
-                    if (err) return console.log(err);
-                    console.log(JSON.stringify(teamcounter));
-                    console.log('writing to ' + teamcounterFileName);
-                  });
-                  console.log(JSON.stringify(teamcounter));
+                writeToJsonKey(teamcounterFileName, teamcounter.virtualCounter, teamcounter.virtualCounter++);
+
+
+                // teamcounter.virtualCounter = teamcounter.virtualCounter++;
+                // //Update team counter and write to file
+                // fs.writeFile(teamcounterFileName, JSON.stringify(teamcounterFileName, null, 2), function writeJSON(err) {
+                //     if (err) return console.log(err);
+                //     console.log(JSON.stringify(teamcounter));
+                //     console.log('writing to ' + teamcounterFileName);
+                //   });
+                //   console.log(JSON.stringify(teamcounter));
 
             } else {
                 message.channel.send("Your team must be between 2 to 4 people");
