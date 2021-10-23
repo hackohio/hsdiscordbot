@@ -341,6 +341,10 @@ bot.on("message", async message => {
         }
     }
 
+    // in person team creation
+    // virtual team creation
+    
+
     //add member to a team. o.addmember "teamname" @[invite] 
     /*
     * Add member command - Invites between 1-3 depending on size

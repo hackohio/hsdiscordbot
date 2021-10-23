@@ -1,4 +1,4 @@
-#registration-get
+# registration-get
 # $ python -m pip install requests
 # $ python -m pip install beautifulsoup4
 import json
