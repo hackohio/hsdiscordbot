@@ -85,6 +85,22 @@ const doesNotExist = "Your discord username is not attached to our records. Plea
  "If you are verifying your account under 24 hours from your confirmation, please wait" +
  " until 24 hours have passed and try again."
 
+
+ function writeToJsonKey(fileName, keyName, value){
+    let fullpath = PATH.resolve(GETPATH, fileName);
+    let rawdata = fs.readFileSync(fullpath,'utf8');
+    console.log(rawdata) //returns data as per json and is of string type
+    
+    const data = JSON.parse(rawdata); 
+    lodash.set(data, keyName, value );
+  
+    
+    fs.writeFileSync(fullpath, JSON.stringify(data, null, 2), function (err) { 
+        if (err) throw err;
+        console.log('Saved!');
+      });
+}
+
 /*
 * Bot commands.
 */
