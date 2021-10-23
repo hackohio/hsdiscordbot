@@ -460,9 +460,10 @@ bot.on("message", async message => {
 
         
         let role = message.member.roles.cache.find(i => {
-            args = args.map(j => j.replace("/[[]]/g", ""));
+            args = args.map(j => j.replace("/[|]/g", ""));
             return i.name == args.join(" ");
         });
+        console.log(role);
 
         if (role != null) {
             await message.member.roles.remove(role);//removes person from role
