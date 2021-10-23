@@ -460,7 +460,7 @@ bot.on("message", async message => {
 
         
         let role = message.member.roles.cache.find(i => {
-            args = args.map(j => j.replace("/[|]/g", ""));
+            args = args.map(j => j.replace(/\[/g,"").replace(/\]/g,""));
             return i.name == args.join(" ");
         });
         console.log(role);
