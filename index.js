@@ -184,7 +184,7 @@ bot.on("message", async message => {
             teamName = teamName.substring(0, 52);//makes sure it is less than 52 characters and above 3
 
             //Extract table number (in person only)
-            let indxTN = message.content.indexOf("[", indx2+1);
+            let indxTN = message.content.indexOf("[", indx2);
             let indxTN2 = message.content.indexOf("]", indxTN);
             let inPerson = !(indxTN < 0); //Determines if in person team
             var teamNumber;
@@ -192,6 +192,7 @@ bot.on("message", async message => {
             //Assigns teamNumber based on in person status
             if(inPerson){
                 let teamNumberString = message.content.substring(indxTN, indxTN2)
+                console.log(teamNumberString);
                 teamNumber = parseInt(teamNumberString);
             } else {
                 teamNumber = teamcounter.virtualCounter;
