@@ -1,4 +1,7 @@
 node_modules
+node_module
+csv-writer-master
+csv-writer
 build
 npm-debug.log
 .env
@@ -8,4 +11,5 @@ credentials.json
 token.json
 test.csv
 admin-reg.json
+tempcode.txt
 High School I_O 2021 Registration Form (Responses) - Form Responses.csv

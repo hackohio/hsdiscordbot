@@ -5,9 +5,11 @@ const utill = require('util');
 const terminal = require('node-cmd');
 const csv = require('csv-parser');
 const fs = require('fs');
+const path = require('objects-to-csv')
 const readline = require('readline');
 const {google} = require('googleapis');
 const lodash = require('lodash');
+const { CsvWriter } = require("csv-writer/src/lib/csv-writer");
 
 
 /**
@@ -127,9 +129,12 @@ bot.on("message", async message => {
             fs.createReadStream(csvPath)//create a stream that reads the file
                 .pipe(csv())//pipe it as a csv format
                 .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
-                   
+                   console.log(message.author.tag);
+                   console.log(row[confirmation.discord]);
                 if (row[discordUsernameColName] == message.author.tag) {
                         discordUsernameExists = true;
+                        
+                        try{
                         message.author.send("Please enter the email that you confirmed with from registration").then(async m => {
 
                             const filter = m => m.author.id == message.author.id;
@@ -148,14 +153,21 @@ bot.on("message", async message => {
                             });
 
                         });
+                        } catch(error){
+                            message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)")
+                        }
                         return;
                     }
 
                 })
                 .on('end', () => {//when the file is done being read this runs
                     if (!discordUsernameExists)
+                    try{
                         //Sends message to user if record does not exist
                         message.author.send(doesNotExist);
+                    } catch(error){
+                        message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)")
+                    }
                 });
         } else {
             //Delete if command is used elsewhere
@@ -458,7 +470,7 @@ bot.on("message", async message => {
     */
     if (command == prefix + "leaveteam") {
 
-        
+        //finds role of member
         let role = message.member.roles.cache.find(i => {
             args = args.map(j => j.replace(/\[/g,"").replace(/\]/g,""));
             return i.name == args.join(" ");
@@ -495,85 +507,94 @@ bot.on("message", async message => {
 
     }
 
+    
     /*
-    * Print names command - Organizers only
+    * Print names command and download as csv - Organizers only
     */
     if (command == prefix + "printnames") {
         message.delete({timeout: 0});
+        
         if (message.member._roles.some(i => i == organizerID)) {
-            message.author.send("\n------Verified Participants in Discord------\n")
-            const count = 0;
+            message.author.send("\n------Verified Participants in Discord------\n").catch((error) => message.reply("Could not send you list"))
             
+            const printCsv = './verified.csv'
+            //Write csv file with information
+            const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+            const csvWriter = createCsvWriter({
+                path: printCsv,
+                header: [
+                    {id: 'profile.name', title: 'profile.name'},
+                    {id: 'confirmation.discord', title: 'confirmation.discord'},
+                    {id: 'team.discord', title: 'team.discord'}
+                    //{id: 'email', title: 'email'}
+
+                ]
+            });
+            //Array of users to push (records)
+            const users = [];
+
+            const count = 0;
             fs.createReadStream(csvPath)//create a stream that reads the file
                 .pipe(csv())//pipe it as a csv format
                 .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
                     //if (row["confirmation.discordUsername"] == message.author.tag) {
-                        let userName = row[discordUsernameColName];
+                           
+                        var userName = ""+row[discordUsernameColName]
+                        userName = userName.replace(/['"]+/g, '');
                         let person = message.guild.members.cache.find(i => i.user.tag === userName);
+                        
+                        let roles;
+                        let savedRoles;
 
-                        if(person != null && person._roles.some(i => i == participantID)){
-                            message.author.send(row[signatureLiabilityColName] + ", " + userName); 
+                        try{
+                             roles =  person.roles.fetch();
+                            console.log(roles)
+                             savedRoles = person.roles.map(role => role.name)
+                            console.log(savedRoles)
+                        }catch (error) {
+                            console.log(error);
+                        }
+
+
+                        //check validity
+                        if(person != null && person.roles.some(i => i == participantID)){
+                            let name = row[signatureLiabilityColName]
+                            //let email = row[emailColName]
+                            const user = {
+                                'profile.name' : name,
+                                'confirmation.discord': userName,
+                                //'email': email
+                            }
+                            //Add to array
+                            users.push(user)
+                        //    message.author.send(row[signatureLiabilityColName] + ", " + userName).catch((error)); 
                         }
 
                         })
                 .on('end', () => {//when the file is done being read this runs
-                        message.author.send("------ Finished ------\n");
                         //message.author.send("Total Verified Users: " + count);
                     //say they're not a registered user
                     //message.member.send("Hey you need to confirm")
+                    //Write to csv
+                     csvWriter.writeRecords(users).then(()=> console.log("Written csv"))
+             
+                    //Create message attachment
+                    const { MessageAttachment } = require("discord.js")
+                    const file = new MessageAttachment(printCsv)
+        
+                    //Send message to user
+                    message.author.send(file).catch((error))
+
+
                 });
 
 
         } else {
             message.channel.send("You do not have access to this command").then(r => r.delete({timeout: 10000}));
         }
+        message.author.send("------ Finished ------\n");
     }
 
-    //Parses Strings to code and outputs it
-    if (command == prefix + "e") {
-
-        if (!args[0]) return message.channel.send("Please input something to execute");
-        if (args.join(' ').includes('token')) return message.channel.send('nahh who do u think u are?');
-        let msg = await message.channel.send("Attempting to evaluate...");
-        if (args[0].toLowerCase() == 'bash') {
-            let hrDiff;
-            const hrStart = process.hrtime();
-            terminal.get(args.slice(1).join(' '), async (err, data) => {
-                hrDiff = process.hrtime(hrStart);
-                if (err) return msg.edit(`Error while evaluating: \`${ err }\``);
-                msg.edit(`\`\`\`md\n${ data.length >= 2000 ? data.substr(0, 1996) + "..." : data }\`\`\``);
-            });
-        } else {
-            let result, hrDiff, dm;
-            try {
-                const hrStart = process.hrtime();
-                if (args[0] === '--dm') {args.shift(); dm = true;}
-                let content = args.join(' ');
-                result = await (async (x = eval(content)) => x instanceof Promise ? await x : x)();
-                hrDiff = process.hrtime(hrStart);
-            } catch (err) {
-                return msg.edit(`Error while evaluating: \`${ err }\``);
-            }
-
-            let inspected = utill.inspect(result, {depth: 0});
-            if (inspected.length >= 1024) inspected = inspected.substring(1020) + "...";
-            let embed = new Discord.MessageEmbed()
-                .setAuthor(`Evaluation in ${ hrDiff[0] > 0 ? `${ hrDiff[0] }s ` : '' }${ hrDiff[1] / 1000000 }ms.`)
-                .setColor("#36393F")
-                .addField("Input", `\`\`\`\n${ args.join(' ') }\`\`\``)
-                .addField("Output", `\`\`\`js\n${ inspected }\`\`\``)
-                .setFooter("Click the ❌ to remove this message. 30 seconds if needed!");
-            let links = inspected.match(/https?:\/\/.*?\..*/);
-            if (links) embed.addField('Here are the links:', links);
-
-            if (dm) {
-                await msg.edit(`I've sent you the response in your direct messages`);
-                return message.author.send(embed);
-            } else return msg.edit(embed);
-        }
-
-
-    }
 
 });
 
