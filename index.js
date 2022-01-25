@@ -1,15 +1,18 @@
 const Discord = require("discord.js");
 const bot = new Discord.Client({"disableEveryone": true});
 const config = require("./config.json");
+const setup = require("./setup.json");
+const errormsg = require("./errormsg.json");
 const utill = require('util');
 const terminal = require('node-cmd');
 const csv = require('csv-parser');
 const fs = require('fs');
-const path = require('objects-to-csv')
+//const path = require('objects-to-csv')
 const readline = require('readline');
 const {google} = require('googleapis');
-const lodash = require('lodash');
-const { CsvWriter } = require("csv-writer/src/lib/csv-writer");
+//const lodash = require('lodash');
+//const { CsvWriter } = require("csv-writer/src/lib/csv-writer"); //npm i csv-writer
+const { CsvWriter } = require("csv-writer"); //npm i csv-writer
 
 
 /**
@@ -19,13 +22,19 @@ const { CsvWriter } = require("csv-writer/src/lib/csv-writer");
  * @author Daniel Dawit and Thomas Dawit
  * 
  */
-  const csvFileName = "Users";
-  const csvPath = csvFileName + ".csv";
-  const teamcounterFileName = "./teamcounter.json";
+  //Constants for csv setup, file names
+  const csvExtension = setup.csvPath;
+  const csvFileName = setup.csvFileNameParticipant;
+  const csvFileNameMentor = setup.csvFileNameMentor;
+
+  //Path names
+  const csvPath = csvFileName + csvExtension;
+  const csvPathMentor = csvFileNameMentor + csvExtension;
+
+  //In person/ team counts
+  const teamcounterFileName = setup.teamcounterFileName;
   const teamcounter = require(teamcounterFileName);
   const currentTeamCount = teamcounter.virtualCounter;
-
-
 
 bot.on("ready", () => {
     console.log("Ready");
@@ -63,31 +72,34 @@ bot.on("guildMemberAdd", (member) => {
 const prefix = config.prefix;
 const cooldown = {};
 
-//Participant focused IDs
-const teamAssignedID = "892527519939584061";
-const participantID = "892527519939584062";
-const verifiedChannelID = "892527520212201508";
-const archiveCategoryID = "892527520736505915";
+//Participant/channel focused IDs
+const teamAssignedID = setup.teamAssignedID;
+const participantID = setup.participantID;
+const verifiedChannelID = setup.verifiedChannelID;
+const archiveCategoryID = setup.archiveCategoryID;
 
-//Misc IDs
-const organizerID = "892527519939584069";
-const mentorID = "892527519939584065";
-const eClubID = "892527519939584067";
-const sponsorID = "892527519939584066";
-const judgeID = "892527519939584064";
+//Misc role IDs
+const organizerID = setup.organizerID;
+const mentorID = setup.mentorID;
+const eClubID = setup.eClubID;
+const sponsorID = setup.sponsorID;
+const judgeID = setup.judgeID;
 
 //Name of the column that contains the discord user name and the users email
-const discordUsernameColName = "confirmation.discord";
-const emailColName = "email";
-const signatureLiabilityColName = "confirmation.signatureLiability"
+const discordUsernameColName = setup.discordUsernameColNameParticipant;
+const emailColName = setup.emailColNameParticipant;
+const signatureLiabilityColName = setup.signatureLiabilityColNameParticipant;
+
+const discordUsernameColNameMentor = setup.discordUsernameColNameMentor;
+const emailColNameMentor = setup.emailColNameMentor;
+const signatureLiabilityColNameMentor = setup.signatureLiabilityColNameMentor;
 
 //Message that sends if not in records
-const doesNotExist = "Your discord username is not attached to our records. Please try"+
-" again with the discord account you registered with or contact an organizer. " +
- "If you are verifying your account under 24 hours from your confirmation, please wait" +
- " until 24 hours have passed and try again."
+const doesNotExist = errormsg.doesNotExist;
 
-
+/*
+* Reads json files
+*/
  function jsonReader(filePath, cb) {
     fs.readFile(filePath, (err, fileData) => {
       if (err) {
@@ -102,13 +114,12 @@ const doesNotExist = "Your discord username is not attached to our records. Plea
     });
   }
 
-
 /*
 * Bot commands.
 */
 bot.on("message", async message => {
 
-    //ignores dms
+    //ignores direct messages or messages from bots
     if (message.channel.type == "dm" || message.author.bot) return;
 
     //gets the name of the command used
@@ -116,26 +127,33 @@ bot.on("message", async message => {
     let args = message.content.substring(command.length + 1).split(" ");
 
     /*
-    * Verification command
+    * Verification command for participants 
+    * o.part
     */
-    if (command == prefix + "verify") {
+    if (command == prefix + "part") {
+
         //If we are in the verify channel
         if (message.channel.id == verifiedChannelID) {
             let discordUsernameExists = false;
             message.delete({timeout: 0});
+            //Check if csv file exists
+            if (!fs.existsSync(csvPath)) {
+                console.log('Participant Directory not found.');
+                return;
+            }  
             /*
             * Create read stream to confirm the users status
             */
             fs.createReadStream(csvPath)//create a stream that reads the file
                 .pipe(csv())//pipe it as a csv format
                 .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
-                   console.log(message.author.tag);
-                   console.log(row[confirmation.discord]);
+                   //console.log(message.author.tag);
+                   //console.log(row[confirmation.discord]);
                 if (row[discordUsernameColName] == message.author.tag) {
                         discordUsernameExists = true;
                         
                         try{
-                        message.author.send("Please enter the email that you confirmed with from registration").then(async m => {
+                        message.author.send(errormsg.emailAsk).then(async m => {
 
                             const filter = m => m.author.id == message.author.id;
                             const collector = m.channel.createMessageCollector(filter);
@@ -143,18 +161,18 @@ bot.on("message", async message => {
                             collector.on('collect', msg => {
                                 
                                 if (msg.content == row[emailColName]) {
-                                    message.author.send("Profile verified. You now have access to the discord server. Head to the team formation channel to start meeting other participants and create your team. Refer back to the #start-here channel for detailed instructions.");
+                                    message.author.send(errormsg.profileVerifiedParticipant);
                                     message.member.roles.add(participantID);
                                     collector.stop();
                                 } else {
-                                    message.author.send("Could not verify your email. Please try again or contact an organizer");
+                                    message.author.send(errormsg.couldNotVerifyEmail);
                                 }
 
                             });
 
                         });
                         } catch(error){
-                            message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)")
+                            message.channel.send(errormsg.dmsDisabledMsg)
                         }
                         return;
                     }
@@ -166,7 +184,7 @@ bot.on("message", async message => {
                         //Sends message to user if record does not exist
                         message.author.send(doesNotExist);
                     } catch(error){
-                        message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)")
+                        message.channel.send(errormsg.dmsDisabledMsg)
                     }
                 });
         } else {
@@ -175,16 +193,117 @@ bot.on("message", async message => {
         }
     }
 
+    /*
+    *  Verification command for mentors 
+    *  o.ment
+    */
+    if (command == prefix + "ment") {
+         
+        //If we are in the verify channel
+        if (message.channel.id == verifiedChannelID) {
+            let discordUsernameExists = false;
+            message.delete({timeout: 0});
+            //Check if csv file exists
+            if (!fs.existsSync(csvPathMentor)) {
+                console.log('Mentor Directory not found.');
+                return;
+            }       
+            /*
+            * Create read stream to confirm the users status
+            */
+            fs.createReadStream(csvPathMentor)//create a stream that reads the file
+                .pipe(csv())//pipe it as a csv format
+                .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
+                   //console.log(message.author.tag);
+                   //console.log(row[confirmation.discord]);
+                if (row[discordUsernameColNameMentor] == message.author.tag) {
+                        discordUsernameExists = true;
+                        
+                        try{
+                            //Ask for email
+                        message.author.send(errormsg.emailAsk).then(async m => {
 
+                            const filter = m => m.author.id == message.author.id;
+                            const collector = m.channel.createMessageCollector(filter);
+
+                            collector.on('collect', msg => {
+                                
+                                if (msg.content == row[emailColNameMentor]) {
+                                    //Assign judge/mentor role
+                                    const roleAssign = mentorID;
+                                    try{
+                                        message.author.send(errormsg.judgementorDistinguish).then(async m2 => {
+                                            const filter2 = m2 => m2.author.id == message.author.id;
+                                            const collector2 = m2.channel.createMessageCollector(filter2);
+                                            collector2.on('collect', msg2 => {
+                                                switch (msg2.content){
+                                                    case "1":
+                                                        roleAssign = mentorID;
+                                                        break;
+                                                    case "2":
+                                                        roleAssign = judgeID;
+                                                        break;
+                                                    case "3":
+                                                        roleAssign = "3"
+                                                        break;
+                                                    default:
+                                                        roleAssign = mentorID;
+                                                        break;
+                                                }
+                                            });
+                                            collector2.stop();
+                                        });
+                                    } catch(error){
+                                        message.channel.send(errormsg.dmsDisabledMsg);
+                                    }
+                                   
+                                    //errormsg.judgementorDistinguish
+                                    message.author.send(errormsg.profileVerifiedMentor);
+                                    message.member.roles.add(roleAssign);
+                                    if(roleAssign == "3"){
+                                        message.member.roles.add(judgeID);
+                                    }
+                                    collector.stop();
+
+
+                                } else {
+                                    message.author.send(errormsg.couldNotVerifyEmail);
+                                }
+
+                            });
+
+                        });
+                        } catch(error){
+                            message.channel.send(errormsg.dmsDisabledMsg);
+                        }
+                        return;
+                    }
+
+                })
+                .on('end', () => {//when the file is done being read this runs
+                    if (!discordUsernameExists)
+                    try{
+                        //Sends message to user if record does not exist
+                        message.author.send(errormsg.doesNotExist);
+                    } catch(error){
+                        message.channel.send(errormsg.dmsDisabledMsg)
+                    }
+                });
+        } else {
+            //Delete if command is used elsewhere
+            message.delete({timeout: 0});
+        }
+    }
     /*
     * Create team command
+    * o.createteam [teamname] @[user]
     */
     if (command == prefix + "createteam") {
         //Check if member is a participant
         if (message.member._roles.some(i => i == participantID)) {
             //Check if command was used recently
             if (cooldown[message.author.id] != null && cooldown[message.author.id] > new Date().getTime()) {
-                message.reply("You cannot create a team at this moment. You have recently used this command within the last 5 minutes");
+                message.reply(errormsg.createteamCooldown);
                 return;
             }
             cooldown[message.author.id] = new Date() + 300000;
@@ -210,10 +329,9 @@ bot.on("message", async message => {
                 teamNumber = teamcounter.virtualCounter;
             }
 
-
             //Checks for illegal characters
             if (teamName.length == 1 && ",.<>?/;:'\"[{]}=+~`!@#$%^&*()".split("").some(i => teamName.includes(i))) {
-                return message.channel.send("Illegal characters in your team name");
+                return message.channel.send(errormsg.illegalCharacters);
             }
 
             //Checks if teamname already exists
@@ -221,7 +339,7 @@ bot.on("message", async message => {
             message.guild.roles.cache.forEach(i => {
                 if (i.name.toLowerCase() == teamName.toLowerCase()) {
                     bool1 = false;
-                    return message.channel.send("This team name already exists");
+                    return message.channel.send(errormsg.teamExists);
                 }
             });
             //Second catch
@@ -239,7 +357,7 @@ bot.on("message", async message => {
                 
                 //Checks if member is already in a team
                 if (message.member.roles.cache.has(teamAssigned)) {
-                    message.reply("You cannot create a team as you are already in one. Please leave a team first.");
+                    message.reply(errormsg.inTeam);
                     return;
                 } else {
                    // message.member.roles.add(message.guild.roles.cache.get(teamAssigned));
@@ -405,24 +523,17 @@ bot.on("message", async message => {
                 }
 
             } else {
-                message.channel.send("Your team must be between 2 to 4 people");
+                message.channel.send(errormsg.teamLimit);
             }
         } else {
-            message.channel.send("You do not have access to this command").then(r => r.delete({timeout: 10000}));
+            message.channel.send(errormsg.commandAccess).then(r => r.delete({timeout: 10000}));
         }
     }
-
-  
-    // in person team creation (already have a number)
-    // 
-
-    // virtual team creation (assign a number)
-    // 600, 601
     
 
-    //add member to a team. o.addmember "teamname" @[invite] 
     /*
     * Add member command - Invites between 1-3 depending on size
+    * o.addmember [teamname] @[user] 
     */
     if (command == prefix + "addmember") {
         
@@ -456,12 +567,12 @@ bot.on("message", async message => {
                 
             });
         }else{
-            message.channel.send("Cannot add member, too many in team or not enough invites");
+            message.channel.send(errormsg.cannotAddIntoTeamLimit);
             return;
         }
 
     }else{
-        message.channel.send("You cannot add members to this team.");
+        message.channel.send(errormsg.cannotAddIntoTeamNotInTeam);
     }
     }
 
@@ -479,7 +590,7 @@ bot.on("message", async message => {
         if (role != null) {
             await message.member.roles.remove(role);//removes person from role
             message.member.roles.remove(teamAssignedID);
-            message.channel.send("You have left your team.");
+            message.channel.send(errormsg.leftTeam);
 
             let numPeopleInRole = role.members.size;
 
@@ -500,14 +611,13 @@ bot.on("message", async message => {
             }
 
         } else {
-            message.reply("you are not apart of this team");
+            message.reply(errormsg.notInTeam);
         }
 
 
 
     }
 
-    
     /*
     * Print names command and download as csv - Organizers only
     */
@@ -590,7 +700,7 @@ bot.on("message", async message => {
 
 
         } else {
-            message.channel.send("You do not have access to this command").then(r => r.delete({timeout: 10000}));
+            message.channel.send(errormsg.commandAccess).then(r => r.delete({timeout: 10000}));
         }
         message.author.send("------ Finished ------\n");
     }
