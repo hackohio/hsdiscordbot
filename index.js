@@ -623,6 +623,11 @@ bot.on("message", async message => {
     */
     if (command == prefix + "printnames") {
         message.delete({timeout: 0});
+        if (!fs.existsSync(csvPath)) {
+            console.log('Directory not found.');
+            message.author.send("No participant csv found")
+            return;
+        }      
         
         if (message.member._roles.some(i => i == organizerID)) {
             message.author.send("\n------Verified Participants in Discord------\n").catch((error) => message.reply("Could not send you list"))
@@ -653,13 +658,10 @@ bot.on("message", async message => {
                         userName = userName.replace(/['"]+/g, '');
                         let person = message.guild.members.cache.find(i => i.user.tag === userName);
                         
-                        let roles;
-                        let savedRoles;
-
                         try{
-                             roles =  person.roles.fetch();
+                            let roles =  person.roles.fetch();
                             console.log(roles)
-                             savedRoles = person.roles.map(role => role.name)
+                            let savedRoles = person.roles.map(role => role.name)
                             console.log(savedRoles)
                         }catch (error) {
                             console.log(error);
@@ -682,18 +684,17 @@ bot.on("message", async message => {
 
                         })
                 .on('end', () => {//when the file is done being read this runs
-                        //message.author.send("Total Verified Users: " + count);
-                    //say they're not a registered user
-                    //message.member.send("Hey you need to confirm")
+                    //message.author.send("Total Verified Users: " + count);
                     //Write to csv
-                     csvWriter.writeRecords(users).then(()=> console.log("Written csv"))
+                    message.author.send("------ Finished ------\n")
+                    csvWriter.writeRecords(users).then(()=> console.log("Written csv"))
              
                     //Create message attachment
                     const { MessageAttachment } = require("discord.js")
                     const file = new MessageAttachment(printCsv)
         
                     //Send message to user
-                    message.author.send(file).catch((error))
+                    message.author.send(file).catch((error) => message.reply("Cant send csv"))
 
 
                 });
