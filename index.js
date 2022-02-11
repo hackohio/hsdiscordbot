@@ -153,7 +153,7 @@ bot.on("message", async message => {
                         discordUsernameExists = true;
                         
                         try{
-                        message.author.send(errormsg.emailAsk).then(async m => {
+                        message.author.send("Please enter the email that you confirmed with from registration").then(async m => {
 
                             const filter = m => m.author.id == message.author.id;
                             const collector = m.channel.createMessageCollector(filter);
@@ -161,18 +161,18 @@ bot.on("message", async message => {
                             collector.on('collect', msg => {
                                 
                                 if (msg.content == row[emailColName]) {
-                                    message.author.send(errormsg.profileVerifiedParticipant);
+                                    message.author.send("Profile verified. You now have access to the discord server. Head to the #introductions channel to start meeting other participants and create your team in the #team-formation channel. Refer back to the #start-here channel for detailed instructions.");
                                     message.member.roles.add(participantID);
                                     collector.stop();
                                 } else {
-                                    message.author.send(errormsg.couldNotVerifyEmail);
+                                    message.author.send("Could not verify your email. Please try again or contact an organizer");
                                 }
 
                             });
 
                         });
                         } catch(error){
-                            message.channel.send(errormsg.dmsDisabledMsg)
+                            message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)")
                         }
                         return;
                     }
@@ -182,9 +182,9 @@ bot.on("message", async message => {
                     if (!discordUsernameExists)
                     try{
                         //Sends message to user if record does not exist
-                        message.author.send(doesNotExist);
+                        message.author.send("Your discord username is not attached to our records. Please try again with the discord account you registered with or contact an organizer. If you are verifying your account under 24 hours from your confirmation, please wait until 24 hours have passed and try again.");
                     } catch(error){
-                        message.channel.send(errormsg.dmsDisabledMsg)
+                        message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)")
                     }
                 });
         } else {
@@ -221,7 +221,7 @@ bot.on("message", async message => {
                         
                         try{
                             //Ask for email
-                        message.author.send(errormsg.emailAsk).then(async m => {
+                        message.author.send("Please enter the email that you confirmed with from registration").then(async m => {
 
                             const filter = m => m.author.id == message.author.id;
                             const collector = m.channel.createMessageCollector(filter);
@@ -232,7 +232,7 @@ bot.on("message", async message => {
                                     //Assign judge/mentor role
                                     const roleAssign = mentorID;
                                     try{
-                                        message.author.send(errormsg.judgementorDistinguish).then(async m2 => {
+                                        message.author.send("Type 1 if you are a mentor. Type 2 if you are a judge. Type 3 if you are a mentor and a judge.").then(async m2 => {
                                             const filter2 = m2 => m2.author.id == message.author.id;
                                             const collector2 = m2.channel.createMessageCollector(filter2);
                                             collector2.on('collect', msg2 => {
@@ -254,11 +254,11 @@ bot.on("message", async message => {
                                             collector2.stop();
                                         });
                                     } catch(error){
-                                        message.channel.send(errormsg.dmsDisabledMsg);
+                                        message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)");
                                     }
                                    
                                     //errormsg.judgementorDistinguish
-                                    message.author.send(errormsg.profileVerifiedMentor);
+                                    message.author.send("Profile verified. You now have access to the discord server. Feel free to introduce yourself in the #introductions channel. Refer back to the #start-here channel for detailed instructions.");
                                     message.member.roles.add(roleAssign);
                                     if(roleAssign == "3"){
                                         message.member.roles.add(judgeID);
@@ -267,14 +267,14 @@ bot.on("message", async message => {
 
 
                                 } else {
-                                    message.author.send(errormsg.couldNotVerifyEmail);
+                                    message.author.send("Could not verify your email. Please try again or contact an organizer");
                                 }
 
                             });
 
                         });
                         } catch(error){
-                            message.channel.send(errormsg.dmsDisabledMsg);
+                            message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)");
                         }
                         return;
                     }
@@ -284,9 +284,9 @@ bot.on("message", async message => {
                     if (!discordUsernameExists)
                     try{
                         //Sends message to user if record does not exist
-                        message.author.send(errormsg.doesNotExist);
+                        message.author.send("Your discord username is not attached to our records. Please try again with the discord account you registered with or contact an organizer. If you are verifying your account under 24 hours from your confirmation, please wait until 24 hours have passed and try again.");
                     } catch(error){
-                        message.channel.send(errormsg.dmsDisabledMsg)
+                        message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)")
                     }
                 });
         } else {
@@ -303,7 +303,7 @@ bot.on("message", async message => {
         if (message.member._roles.some(i => i == participantID)) {
             //Check if command was used recently
             if (cooldown[message.author.id] != null && cooldown[message.author.id] > new Date().getTime()) {
-                message.reply(errormsg.createteamCooldown);
+                message.reply("You cannot create a team at this time. You have recently used this command within the last 5 minutes");
                 return;
             }
             cooldown[message.author.id] = new Date() + 300000;
@@ -331,7 +331,7 @@ bot.on("message", async message => {
 
             //Checks for illegal characters
             if (teamName.length == 1 && ",.<>?/;:'\"[{]}=+~`!@#$%^&*()".split("").some(i => teamName.includes(i))) {
-                return message.channel.send(errormsg.illegalCharacters);
+                return message.channel.send("Illegal characters in your team name");
             }
 
             //Checks if teamname already exists
@@ -339,7 +339,7 @@ bot.on("message", async message => {
             message.guild.roles.cache.forEach(i => {
                 if (i.name.toLowerCase() == teamName.toLowerCase()) {
                     bool1 = false;
-                    return message.channel.send(errormsg.teamExists);
+                    return message.channel.send("This team name already exists");
                 }
             });
             //Second catch
@@ -357,7 +357,7 @@ bot.on("message", async message => {
                 
                 //Checks if member is already in a team
                 if (message.member.roles.cache.has(teamAssigned)) {
-                    message.reply(errormsg.inTeam);
+                    message.reply("You cannot create a team as you are already in one. Please leave a team first.");
                     return;
                 } else {
                    // message.member.roles.add(message.guild.roles.cache.get(teamAssigned));
@@ -523,10 +523,10 @@ bot.on("message", async message => {
                 }
 
             } else {
-                message.channel.send(errormsg.teamLimit);
+                message.channel.send("Your team must be between 2 to 4 people");
             }
         } else {
-            message.channel.send(errormsg.commandAccess).then(r => r.delete({timeout: 10000}));
+            message.channel.send("You do not have access to this command").then(r => r.delete({timeout: 10000}));
         }
     }
     
@@ -567,12 +567,12 @@ bot.on("message", async message => {
                 
             });
         }else{
-            message.channel.send(errormsg.cannotAddIntoTeamLimit);
+            message.channel.send("Cannot add member, too many in team or not enough invites");
             return;
         }
 
     }else{
-        message.channel.send(errormsg.cannotAddIntoTeamNotInTeam);
+        message.channel.send("You cannot add members into the team you specified.");
     }
     }
 
@@ -590,7 +590,7 @@ bot.on("message", async message => {
         if (role != null) {
             await message.member.roles.remove(role);//removes person from role
             message.member.roles.remove(teamAssignedID);
-            message.channel.send(errormsg.leftTeam);
+            message.channel.send("You have left your team.");
 
             let numPeopleInRole = role.members.size;
 
@@ -611,7 +611,7 @@ bot.on("message", async message => {
             }
 
         } else {
-            message.reply(errormsg.notInTeam);
+            message.reply("you are not apart of this team");
         }
 
 
@@ -701,7 +701,7 @@ bot.on("message", async message => {
 
 
         } else {
-            message.channel.send(errormsg.commandAccess).then(r => r.delete({timeout: 10000}));
+            message.channel.send("You do not have access to this command").then(r => r.delete({timeout: 10000}));
         }
         message.author.send("------ Finished ------\n");
     }
