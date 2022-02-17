@@ -18,59 +18,23 @@ const { CsvWriter } = require("csv-writer"); //npm i csv-writer
 /**
  * I/O Discord Bot. Create team formations from a formation form.
  * 
+ * @author Daniel Dawit, Thomas Dawit
  * 
- * @author Daniel Dawit and Thomas Dawit
- * 
- */
-  //Constants for csv setup, file names
-  const csvExtension = setup.csvPath;
-  const csvFileName = setup.csvFileNameParticipant;
-  const csvFileNameMentor = setup.csvFileNameMentor;
+*/
 
-  //Path names
-  const csvPath = csvFileName + csvExtension;
-  const csvPathMentor = csvFileNameMentor + csvExtension;
+//Constants for csv setup, file names
+const csvExtension = setup.csvPath;
+const csvFileName = setup.csvFileNameParticipant;
+const csvFileNameMentor = setup.csvFileNameMentor;
 
-  //In person/ team counts
-  const teamcounterFileName = setup.teamcounterFileName;
-  const teamcounter = require(teamcounterFileName);
-  const currentTeamCount = teamcounter.virtualCounter;
+//Path names
+const csvPath = csvFileName + csvExtension;
+const csvPathMentor = csvFileNameMentor + csvExtension;
 
-bot.on("ready", () => {
-    console.log("Ready");
-});
-
-/**
-Runs whenever a user joins a discord server
-@params member the member that joined
-@requires the path to the csv file to be valid
-@ensures it is read
-**/
-bot.on("guildMemberAdd", (member) => {
-
-    fs.createReadStream(csvPath)//create a stream that reads the file
-        .pipe(csv())//pipe it as a csv format
-        .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
-            console.log(row);
-            if (row["confirmation.discordUsername"])
-            {
-                //setup user
-                console.log("New user confirmed");
-                //add permissions here
-                return;
-            }
-
-        })
-        .on('end', () => {//when the file is done being read this runs
-            //say they're not a registered user
-            console.log("User is not a registered user");
-        });
-
-});
-
-
-const prefix = config.prefix;
-const cooldown = {};
+//In person/ team counts
+const teamcounterFileName = setup.teamcounterFileName;
+const teamcounter = require(teamcounterFileName);
+const currentTeamCount = teamcounter.virtualCounter;
 
 //Participant/channel focused IDs
 const teamAssignedID = setup.teamAssignedID;
@@ -96,6 +60,43 @@ const signatureLiabilityColNameMentor = setup.signatureLiabilityColNameMentor;
 
 //Message that sends if not in records
 const doesNotExist = errormsg.doesNotExist;
+
+//bot constants for prefixes/command cooldowns
+const prefix = config.prefix;
+const cooldown = {};
+
+//when bot is ready to start, log to the console
+bot.on("ready", () => {
+    console.log("Ready");
+});
+
+/**
+* Runs whenever a user joins a discord server
+* @params member the member that joined
+* @requires the path to the csv file to be valid
+* @ensures it is read
+**/
+bot.on("guildMemberAdd", (member) => {
+
+    fs.createReadStream(csvPath)//create a stream that reads the file
+        .pipe(csv())//pipe it as a csv format
+        .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
+            console.log(row);
+            if (row["confirmation.discordUsername"])
+            {
+                //setup user
+                console.log("New user confirmed");
+                //add permissions here
+                return;
+            }
+
+        })
+        .on('end', () => {//when the file is done being read this runs
+            //say they're not a registered user
+            console.log("User is not a registered user");
+        });
+
+});
 
 /*
 * Reads json files
@@ -149,7 +150,7 @@ bot.on("message", async message => {
                 .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
                    //console.log(message.author.tag);
                    //console.log(row[confirmation.discord]);
-                if (row[discordUsernameColName] == message.author.tag) {
+                if (row["\""+discordUsernameColName+"\""] == "\""+message.author.tag+"\"") {
                         discordUsernameExists = true;
                         
                         try{
@@ -160,7 +161,7 @@ bot.on("message", async message => {
 
                             collector.on('collect', msg => {
                                 
-                                if (msg.content == row[emailColName]) {
+                                if ("\""+msg.content+"\"" == row["\""+emailColName+"\""]) {
                                     message.author.send("Profile verified. You now have access to the discord server. Head to the #introductions channel to start meeting other participants and create your team in the #team-formation channel. Refer back to the #start-here channel for detailed instructions.");
                                     message.member.roles.add(participantID);
                                     collector.stop();
