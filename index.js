@@ -154,7 +154,10 @@ bot.on("message", async message => {
                         discordUsernameExists = true;
                         
                         try{
-                        message.author.send("Please enter the email that you confirmed with from registration").then(async m => {
+                        message.author.send("Please enter the email that you confirmed with from registration").catch(error => {
+                            console.log(error);
+                            message.reply('Your DMs are disabeled.');    
+                         }).then(async m => {
 
                             const filter = m => m.author.id == message.author.id;
                             const collector = m.channel.createMessageCollector(filter);
@@ -162,7 +165,11 @@ bot.on("message", async message => {
                             collector.on('collect', msg => {
                                 
                                 if ("\""+msg.content+"\"" == row["\""+emailColName+"\""]) {
-                                    message.author.send("Profile verified. You now have access to the discord server. Head to the #introductions channel to start meeting other participants and create your team in the #team-formation channel. Refer back to the #start-here channel for detailed instructions.");
+                                    message.author.send("Profile verified. You now have access to the discord server. "
+                                    + "Head to the #introductions channel to start meeting other participants and create your team in the #team-formation channel. Refer back to the #start-here channel for detailed instructions.").catch(error => {
+                                        console.log(error);
+                                        message.reply('Your DMs are disabled.');    
+                                     });
                                     message.member.roles.add(participantID);
                                     collector.stop();
                                 } else {
@@ -183,7 +190,10 @@ bot.on("message", async message => {
                     if (!discordUsernameExists)
                     try{
                         //Sends message to user if record does not exist
-                        message.author.send("Your discord username is not attached to our records. Please try again with the discord account you registered with or contact an organizer. If you are verifying your account under 24 hours from your confirmation, please wait until 24 hours have passed and try again.");
+                        message.author.send("Your discord username is not attached to our records. Please try again with the discord account you registered with or contact an organizer. If you are verifying your account under 24 hours from your confirmation, please wait until 24 hours have passed and try again.").catch(error => {
+                            console.log(error);
+                            message.reply('Your DMs are disabeled.');    
+                         });
                     } catch(error){
                         message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)")
                     }
