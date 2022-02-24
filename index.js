@@ -232,7 +232,7 @@ bot.on("message", async message => {
                         
                         try{
                             //Ask for email
-                        message.author.send("Please enter the email that you confirmed with from registration").then(async m => {
+                        message.author.send("Please enter the email that you confirmed with from registration").then(m => {
 
                             const filter = m => m.author.id == message.author.id;
                             const collector = m.channel.createMessageCollector(filter);
@@ -241,12 +241,13 @@ bot.on("message", async message => {
                                 
                                 if (msg.content == row[emailColNameMentor]) {
                                     //Assign judge/mentor role
-                                    const roleAssign = mentorID;
+                                    let roleAssign = mentorID;
                                     try{
-                                        message.author.send("Type 1 if you are a mentor. Type 2 if you are a judge. Type 3 if you are a mentor and a judge.").then(async m2 => {
+                                        message.author.send("Type 1 if you are a mentor. Type 2 if you are a judge. Type 3 if you are a mentor and a judge.").then(m2 => {
                                             const filter2 = m2 => m2.author.id == message.author.id;
                                             const collector2 = m2.channel.createMessageCollector(filter2);
                                             collector2.on('collect', msg2 => {
+                                                console.log(msg2.content)
                                                 switch (msg2.content){
                                                     case "1":
                                                         roleAssign = mentorID;
@@ -261,21 +262,31 @@ bot.on("message", async message => {
                                                         roleAssign = mentorID;
                                                         break;
                                                 }
+
+                                                //errormsg.judgementorDistinguish
+                                                message.author.send("Profile verified. You now have access to the discord server. Feel free to introduce yourself in the #introductions channel. Refer back to the #start-here channel for detailed instructions.");
+                                               
+                                                
+                                                
+                                                
+                                                if(roleAssign == "3"){
+                                                    message.member.roles.add(judgeID);
+                                                    message.member.roles.add(mentorID);
+                                                } else {
+                                                    message.member.roles.add(roleAssign);
+                                                }
+
+                                                collector2.stop();
                                             });
-                                            collector2.stop();
+
+
+                                           
                                         });
                                     } catch(error){
                                         message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)");
                                     }
                                    
-                                    //errormsg.judgementorDistinguish
-                                    message.author.send("Profile verified. You now have access to the discord server. Feel free to introduce yourself in the #introductions channel. Refer back to the #start-here channel for detailed instructions.");
-                                    message.member.roles.add(roleAssign);
-                                    if(roleAssign == "3"){
-                                        message.member.roles.add(judgeID);
-                                    }
                                     collector.stop();
-
 
                                 } else {
                                     message.author.send("Could not verify your email. Please try again or contact an organizer");
