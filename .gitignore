@@ -9,8 +9,12 @@ npm-debug.log
 config.json
 credentials.json
 token.json
-test.csv
 admin-reg.json
 tempcode.txt
 setup.json
+test.csv
+Users.csv
+UsersHS.csv
+Mentors.csv
+verified.csv
 High School I_O 2021 Registration Form (Responses) - Form Responses.csv
