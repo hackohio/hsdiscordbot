@@ -156,7 +156,8 @@ bot.on("message", async message => {
                         try{
                         message.author.send("Please enter the email that you confirmed with from registration").catch(error => {
                             console.log(error);
-                            message.reply('Your DMs are disabeled.');    
+                            message.reply('Your DMs are disabled.');  
+                            return;  
                          }).then(async m => {
 
                             const filter = m => m.author.id == message.author.id;
@@ -168,7 +169,9 @@ bot.on("message", async message => {
                                     message.author.send("Profile verified. You now have access to the discord server. "
                                     + "Head to the #introductions channel to start meeting other participants and create your team in the #team-formation channel. Refer back to the #start-here channel for detailed instructions.").catch(error => {
                                         console.log(error);
-                                        message.reply('Your DMs are disabled.');    
+                                        message.reply('Your DMs are disabled.'); 
+                                        collector.stop();  
+                                        return; 
                                      });
                                     message.member.roles.add(participantID);
                                     collector.stop();
@@ -192,7 +195,7 @@ bot.on("message", async message => {
                         //Sends message to user if record does not exist
                         message.author.send("Your discord username is not attached to our records. Please try again with the discord account you registered with or contact an organizer. If you are verifying your account under 24 hours from your confirmation, please wait until 24 hours have passed and try again.").catch(error => {
                             console.log(error);
-                            message.reply('Your DMs are disabeled.');    
+                            message.reply('Your DMs are disabled.');    
                          });
                     } catch(error){
                         message.channel.send("Something went wrong while I tried to send you a DM (DMs disabled?)")
@@ -379,7 +382,7 @@ bot.on("message", async message => {
                 
                 //Checks if member is already in a team
                 if (message.member.roles.cache.has(teamAssigned)) {
-                    message.reply("You cannot create a team as you are already in one. Please leave a team first.");
+                    message.reply("You cannot create a team as you are already in one. Please leave your team first.");
                     return;
                 } else {
                    // message.member.roles.add(message.guild.roles.cache.get(teamAssigned));
@@ -662,13 +665,19 @@ bot.on("message", async message => {
                 header: [
                     {id: 'profile.name', title: 'profile.name'},
                     {id: 'confirmation.discord', title: 'confirmation.discord'},
-                    {id: 'team.discord', title: 'team.discord'}
+                    {id: 'email', title: 'email'},
+                    {id: 'roles', title: 'roles'}
                     //{id: 'email', title: 'email'}
 
                 ]
             });
             //Array of users to push (records)
-            const users = [];
+            let users = [];
+            normRoles = [];
+
+            //Fetch members and create a list of people with the team assigned ID to compare against
+            message.guild.members.fetch()
+            let assignedTeamList = message.guild.roles.cache.get(teamAssignedID).members.map(m => m.user.tag)
 
             const count = 0;
             fs.createReadStream(csvPath)//create a stream that reads the file
@@ -676,29 +685,29 @@ bot.on("message", async message => {
                 .on('data', (row) => {//when a row is formatted, we run this block. The row is defined as 'row'
                     //if (row["confirmation.discordUsername"] == message.author.tag) {
                            
-                        var userName = ""+row[discordUsernameColName]
+                        let userName = ""+row[discordUsernameColName]
                         userName = userName.replace(/['"]+/g, '');
-                        let person = message.guild.members.cache.find(i => i.user.tag === userName);
-                        
-                        try{
-                            let roles =  person.roles.fetch();
-                            console.log(roles)
-                            let savedRoles = person.roles.map(role => role.name)
-                            console.log(savedRoles)
-                        }catch (error) {
-                            console.log(error);
-                        }
+                        console.log(userName)
 
+                        // message.guild.members.fetch().then(m => {
+                        //     let members = m.filter(u => u.roles, assignedTeamList.includes(u.tag))
+                        //     console.log(members) //array of all members
+                        //     //you can also use "m.each(u => console.log(u.user.username))" to log each one individually
+                        //   })
+
+                        //if (message.guild.members.cache.some(role => assignedTeamList.includes(role.id))) {}
 
                         //check validity
-                        if(person != null && person.roles.some(i => i == participantID)){
+                        if(assignedTeamList.includes(userName)){
                             let name = row[signatureLiabilityColName]
-                            //let email = row[emailColName]
+                            let email = row[emailColName]
                             const user = {
                                 'profile.name' : name,
                                 'confirmation.discord': userName,
-                                //'email': email
+                                'email': email,
+                                'roles': ""
                             }
+                            console.table(user)
                             //Add to array
                             users.push(user)
                         //    message.author.send(row[signatureLiabilityColName] + ", " + userName).catch((error)); 
@@ -708,15 +717,15 @@ bot.on("message", async message => {
                 .on('end', () => {//when the file is done being read this runs
                     //message.author.send("Total Verified Users: " + count);
                     //Write to csv
-                    message.author.send("------ Finished ------\n")
-                    csvWriter.writeRecords(users).then(()=> console.log("Written csv"))
+                    message.author.send("------ Finished ------\n");
+                    csvWriter.writeRecords(users).then(()=> console.log("Written csv"));
              
                     //Create message attachment
-                    const { MessageAttachment } = require("discord.js")
-                    const file = new MessageAttachment(printCsv)
+                    const { MessageAttachment } = require("discord.js");
+                    const file = new MessageAttachment(printCsv);
         
                     //Send message to user
-                    message.author.send(file).catch((error) => message.reply("Cant send csv"))
+                    message.author.send(file).catch((error) => message.reply("Cant send csv"));
 
 
                 });
